@@ -1,0 +1,2074 @@
+<head>
+  <style>
+    body {
+      font-family: Sans-serif;
+      font-size: 10px;
+    }
+
+    .slice {
+      cursor: pointer;
+    }
+
+    .slice .main-arc {
+      stroke: #fff;
+      stroke-width: 1px;
+    }
+
+    .slice .hidden-arc {
+      fill: none;
+    }
+
+    .slice text {
+      pointer-events: none;
+      dominant-baseline: middle;
+      text-anchor: middle;
+    }
+  </style>
+
+  <script src='d3.min.js'></script>
+</head>
+
+<body>
+  <script>
+    const width = window.innerWidth,
+      height = window.innerHeight,
+      maxRadius = (Math.min(width, height) / 2) - 5;
+
+    const formatNumber = d3.format(',d');
+
+    const x = d3.scaleLinear()
+      .range([0, 2 * Math.PI])
+      .clamp(true);
+
+    const y = d3.scaleSqrt()
+      .range([maxRadius * .1, maxRadius]);
+
+    const color = d3.scaleOrdinal(d3.schemeCategory20);
+
+    const partition = d3.partition();
+
+    const arc = d3.arc()
+      .startAngle(d => x(d.x0))
+      .endAngle(d => x(d.x1))
+      .innerRadius(d => Math.max(0, y(d.y0)))
+      .outerRadius(d => Math.max(0, y(d.y1)));
+
+    const middleArcLine = d => {
+      const halfPi = Math.PI / 2;
+      const angles = [x(d.x0) - halfPi, x(d.x1) - halfPi];
+      const r = Math.max(0, (y(d.y0) + y(d.y1)) / 2);
+
+      const middleAngle = (angles[1] + angles[0]) / 2;
+      const invertDirection = middleAngle > 0 && middleAngle < Math.PI; // On lower quadrants write text ccw
+      if (invertDirection) { angles.reverse(); }
+
+      const path = d3.path();
+      path.arc(0, 0, r, angles[0], angles[1], invertDirection);
+      return path.toString();
+    };
+
+    const textFits = d => {
+      const CHAR_SPACE = 6;
+
+      const deltaAngle = x(d.x1) - x(d.x0);
+      const r = Math.max(0, (y(d.y0) + y(d.y1)) / 2);
+      const perimeter = r * deltaAngle;
+
+      return d.data.name.length * CHAR_SPACE < perimeter;
+    };
+
+    const svg = d3.select('body').append('svg')
+      .style('width', '100vw')
+      .style('height', '100vh')
+      .attr('viewBox', `${-width / 2} ${-height / 2} ${width} ${height}`)
+      .on('click', () => focusOn()); // Reset zoom on canvas click
+
+    json =
+      {
+        "name": "Welcome to the Wheel of Skills! Click on different skills to see the highest skilled people in each category.",
+        "color": "#FFF",
+        "children": [
+          {
+            "name": "Visualization",
+            "color": "#ff6d7c",
+            "children": [
+              {
+                "name": "Medium",
+                "color": "#ff828e",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Gellert Grindelwald  5",
+                    "color": "#ff828e",
+                    "size": "2"
+                  },
+                  {
+                    "name": "Cuthbert Binns 5",
+                    "color": "#ff828e",
+                    "size": "2"
+                  },
+                  {
+                    "name": "Michael Corner 5",
+                    "color": "#ff828e",
+                    "size": "2"
+                  },
+                  {
+                    "name": "Peter Pettigrew  5",
+                    "color": "#ff828e",
+                    "size": "2"
+                  },
+                  {
+                    "name": "Poppy Pomfrey  5",
+                    "color": "#ff828e",
+                    "size": "2"
+                  },
+                  {
+                    "name": "Amycus Carrow 5",
+                    "color": "#ff828e",
+                    "size": "2"
+                  },
+                  {
+                    "name": "Vincent Crabbe 5",
+                    "color": "#ff828e",
+                    "size": "2"
+                  },
+                  {
+                    "name": "Rolanda Hooch  5",
+                    "color": "#ff828e",
+                    "size": "2"
+                  },
+                  {
+                    "name": "Xenophilius Lovegood  5",
+                    "color": "#ff828e",
+                    "size": "2"
+                  },
+                  {
+                    "name": "Marcus Flint 6",
+                    "color": "#ff828e",
+                    "size": "2"
+                  },
+                  {
+                    "name": "Viktor Krum 6",
+                    "color": "#ff828e",
+                    "size": "2"
+                  },
+                  {
+                    "name": "Bathilda Bagshot  6",
+                    "color": "#ff828e",
+                    "size": "2"
+                  },
+                  {
+                    "name": "Sturgis Podmore  6",
+                    "color": "#ff828e",
+                    "size": "2"
+                  }
+                ]
+              },
+              {
+                "name": "High",
+                "color": "#ff5969",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Igor Karkaroff  7",
+                    "color": "#ff5969",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Pansy Parkinson 7",
+                    "color": "#ff5969",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Harry Potter  7",
+                    "color": "#ff5969",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Terry Boot 7",
+                    "color": "#ff5969",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Colin Creevey 7",
+                    "color": "#ff5969",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Mary Cattermole  8",
+                    "color": "#ff5969",
+                    "size": "1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Computer graphics",
+            "color": "#6dcbff",
+            "size": "0",
+            "children": [
+              {
+                "name": "Medium",
+                "color": "#7fd1ff",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Rolanda Hooch  5",
+                    "color": "#7fd1ff",
+                    "size": "3"
+                  },
+                  {
+                    "name": "Bellatrix Lestrange 5",
+                    "color": "#7fd1ff",
+                    "size": "3"
+                  },
+                  {
+                    "name": "Garrick Ollivander  5",
+                    "color": "#7fd1ff",
+                    "size": "3"
+                  },
+                  {
+                    "name": "Pansy Parkinson 6",
+                    "color": "#7fd1ff",
+                    "size": "3"
+                  },
+                  {
+                    "name": "Peter Pettigrew  6",
+                    "color": "#7fd1ff",
+                    "size": "3"
+                  }
+                ]
+              },
+              {
+                "name": "High",
+                "color": "#5bc4ff",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Marcus Flint 8",
+                    "color": "#5bc4ff",
+                    "size": "3"
+                  },
+                  {
+                    "name": "Poppy Pomfrey  8",
+                    "color": "#5bc4ff",
+                    "size": "3"
+                  },
+                  {
+                    "name": "Amycus Carrow 8",
+                    "color": "#5bc4ff",
+                    "size": "3"
+                  },
+                  {
+                    "name": "Seamus Finnigan 8",
+                    "color": "#5bc4ff",
+                    "size": "3"
+                  },
+                  {
+                    "name": "Sturgis Podmore  8",
+                    "color": "#5bc4ff",
+                    "size": "3"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Statistics",
+            "color": "#ffe96d",
+            "children": [
+              {
+                "name": "Medium",
+                "color": "#ffef99",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Godric Gryffindor  5",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Cormac McLaggen 5",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Phineas Nigellus Black 5",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Ludo Bagman  5",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Cuthbert Binns 5",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Neville Longbottom 5",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Poppy Pomfrey  5",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Reginald Cattermole 5",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Filius Flitwick  5",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Bellatrix Lestrange 5",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Graham Montague 5",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Irma Pince 5",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Bathilda Bagshot  5",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  }
+                ]
+              },
+              {
+                "name": "High",
+                "color": "#ffe660",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Cornelius Fudge 6",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Susan Bones  6",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Albus Dumbledore 6",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Igor Karkaroff  6",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Ernie Macmillan 6",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Antioch Peverell 6",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Amycus Carrow 6",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Terry Boot 6",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Peter Pettigrew  7",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Mary Cattermole  8",
+                    "color": "#ffe96d",
+                    "size": "1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Mathematics",
+            "color": "#81ff6d",
+            "children": [
+              {
+                "name": "Medium",
+                "color": "#95ff84",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Amelia Bones  5",
+                    "color": "#95ff84",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Ludo Bagman  5",
+                    "color": "#95ff84",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Cuthbert Binns 5",
+                    "color": "#95ff84",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Lavender Brown 5",
+                    "color": "#95ff84",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Amos Diggory 5",
+                    "color": "#95ff84",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Helga Hufflepuff 5",
+                    "color": "#95ff84",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Neville Longbottom 5",
+                    "color": "#95ff84",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Theodore Nott 5",
+                    "color": "#95ff84",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Amycus Carrow 5",
+                    "color": "#95ff84",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Seamus Finnigan 5",
+                    "color": "#95ff84",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Rolanda Hooch  5",
+                    "color": "#95ff84",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Bathilda Bagshot  5",
+                    "color": "#95ff84",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Terry Boot 5",
+                    "color": "#95ff84",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Sturgis Podmore  5",
+                    "color": "#95ff84",
+                    "size": "1"
+                  }
+                ]
+              },
+              {
+                "name": "High",
+                "color": "#76ff60",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Cornelius Fudge 6",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Hannah Abbott  6",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Phineas Nigellus Black 6",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Albus Dumbledore 6",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Alecto Carrow 6",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Michael Corner 6",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Igor Karkaroff  6",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Antioch Peverell 6",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Poppy Pomfrey  6",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Filius Flitwick  6",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Bellatrix Lestrange 6",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Colin Creevey 6",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Godric Gryffindor  7",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Charity Burbage 7",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Reginald Cattermole 7",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Mary Cattermole  7",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Graham Montague 7",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Irma Pince 7",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Susan Bones  8",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Peter Pettigrew  8",
+                    "color": "#76ff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Millicent Bulstrode 10",
+                    "color": "#76ff60",
+                    "size": "1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Arts",
+            "color": "#ffa3fb",
+            "children": [
+              {
+                "name": "Medium",
+                "color": "#ffadfb",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Amelia Bones  5",
+                    "color": "#ffadfb",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Michael Corner 5",
+                    "color": "#ffadfb",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Marcus Flint 5",
+                    "color": "#ffadfb",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Mary Cattermole  5",
+                    "color": "#ffadfb",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Cormac McLaggen 6",
+                    "color": "#ffadfb",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Gellert Grindelwald  6",
+                    "color": "#ffadfb",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Minerva McGonagall 6",
+                    "color": "#ffadfb",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Peter Pettigrew  6",
+                    "color": "#ffadfb",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Amycus Carrow 6",
+                    "color": "#ffadfb",
+                    "size": "1"
+                  }
+                ]
+              },
+              {
+                "name": "High",
+                "color": "#ff96f9",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Katie Bell  7",
+                    "color": "#ff96f9",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Phineas Nigellus Black 7",
+                    "color": "#ff96f9",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Pansy Parkinson 7",
+                    "color": "#ff96f9",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Poppy Pomfrey  7",
+                    "color": "#ff96f9",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Vincent Crabbe 7",
+                    "color": "#ff96f9",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Filius Flitwick  7",
+                    "color": "#ff96f9",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Xenophilius Lovegood  7",
+                    "color": "#ff96f9",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Fleur Delacour  7",
+                    "color": "#ff96f9",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Sirius Black 8",
+                    "color": "#ff96f9",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Rolanda Hooch  8",
+                    "color": "#ff96f9",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Hermione Granger 8",
+                    "color": "#ff96f9",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Millicent Bulstrode 8",
+                    "color": "#ff96f9",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Colin Creevey 8",
+                    "color": "#ff96f9",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Silvanus Kettleburn  9",
+                    "color": "#ff96f9",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Theodore Nott 10",
+                    "color": "#ff96f9",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Harry Potter  10",
+                    "color": "#ff96f9",
+                    "size": "1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Computer",
+            "color": "#ff9d60",
+            "children": [
+              {
+                "name": "Medium",
+                "color": "#ffa670",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Cormac McLaggen 5",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Hannah Abbott  6",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Katie Bell  6",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Phineas Nigellus Black 6",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Amelia Bones  6",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Susan Bones  6",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Frank Bryce 6",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Albus Dumbledore 6",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Gellert Grindelwald  6",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Ludo Bagman  7",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Cuthbert Binns 7",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Sirius Black 7",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Lavender Brown 7",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Charity Burbage 7",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Alecto Carrow 7",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Michael Corner 7",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Amos Diggory 7",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Rubeus Hagrid  7",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Helga Hufflepuff 7",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Igor Karkaroff  7",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Remus Lupin 7",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Minerva McGonagall 7",
+                    "color": "#ffa670",
+                    "size": "1"
+                  },
+                ]
+              },
+              {
+                "name": "High",
+                "color": "#ff9351",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Penelope Clearwater  8",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Marcus Flint 8",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Viktor Krum 8",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Silvanus Kettleburn  8",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Neville Longbottom 8",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Ernie Macmillan 8",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Theodore Nott 8",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Pansy Parkinson 8",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Peter Pettigrew  8",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Antioch Peverell 8",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Poppy Pomfrey  8",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Harry Potter  8",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Amycus Carrow 9",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Reginald Cattermole 9",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Mary Cattermole  9",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Vincent Crabbe 9",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Seamus Finnigan 9",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Filius Flitwick  9",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Rolanda Hooch  9",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Hermione Granger 9",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Bellatrix Lestrange 9",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Xenophilius Lovegood  9",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Draco Malfoy 9",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Graham Montague 9",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Garrick Ollivander  9",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Irma Pince 9",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Bathilda Bagshot  10",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Terry Boot 10",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Millicent Bulstrode 10",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Colin Creevey 10",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Fleur Delacour  10",
+                    "color": "#ff9351",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Sturgis Podmore  10",
+                    "color": "#ff9351",
+                    "size": "1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Programming",
+            "color": "#ff5949",
+            "children": [
+              {
+                "name": "Medium",
+                "color": "#ff6a5b",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Godric Gryffindor  5",
+                    "color": "#ff6a5b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Hannah Abbott  5",
+                    "color": "#ff6a5b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Sirius Black 5",
+                    "color": "#ff6a5b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Alecto Carrow 5",
+                    "color": "#ff6a5b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Michael Corner 5",
+                    "color": "#ff6a5b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Remus Lupin 5",
+                    "color": "#ff6a5b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Ernie Macmillan 5",
+                    "color": "#ff6a5b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Harry Potter  5",
+                    "color": "#ff6a5b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Cormac McLaggen 6",
+                    "color": "#ff6a5b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Charity Burbage 6",
+                    "color": "#ff6a5b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Rubeus Hagrid  6",
+                    "color": "#ff6a5b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Neville Longbottom 6",
+                    "color": "#ff6a5b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Vincent Crabbe 6",
+                    "color": "#ff6a5b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Irma Pince 6",
+                    "color": "#ff6a5b",
+                    "size": "1"
+                  },
+                ]
+              },
+              {
+                "name": "High",
+                "color": "#ff4c3a",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Cuthbert Binns 7",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Igor Karkaroff  7",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Marcus Flint 7",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Amycus Carrow 7",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Seamus Finnigan 7",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Bellatrix Lestrange 7",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Xenophilius Lovegood  7",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Bathilda Bagshot  7",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Millicent Bulstrode 7",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Ludo Bagman  8",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Pansy Parkinson 8",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Peter Pettigrew  8",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Poppy Pomfrey  8",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Mary Cattermole  8",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Rolanda Hooch  8",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Hermione Granger 8",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Graham Montague 8",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Garrick Ollivander  8",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Terry Boot 8",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Colin Creevey 8",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Reginald Cattermole 9",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Draco Malfoy 9",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Sturgis Podmore  10",
+                    "color": "#ff4c3a",
+                    "size": "1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Communication",
+            "color": "#baff7a",
+            "children": [
+              {
+                "name": "Medium",
+                "color": "#cbff9b",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Cornelius Fudge 6",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Albus Dumbledore 6",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Michael Corner 6",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Amos Diggory 6",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Antioch Peverell 6",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Cormac McLaggen 7",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Katie Bell  7",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Susan Bones  7",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Frank Bryce 7",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Gellert Grindelwald  7",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Igor Karkaroff  7",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Pansy Parkinson 7",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Poppy Pomfrey  7",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Amycus Carrow 7",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Filius Flitwick  7",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Hermione Granger 7",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Bellatrix Lestrange 7",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Xenophilius Lovegood  7",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Garrick Ollivander  7",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Irma Pince 7",
+                    "color": "#cbff9b",
+                    "size": "1"
+                  },
+                ]
+              },
+              {
+                "name": "High",
+                "color": "#acff60",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Amelia Bones  8",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Alecto Carrow 8",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Rubeus Hagrid  8",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Remus Lupin 8",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Harry Potter  8",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Graham Montague 8",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Cho Chang  9",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Charity Burbage 9",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Helga Hufflepuff 9",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Minerva McGonagall 9",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Penelope Clearwater  9",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Silvanus Kettleburn  9",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Draco Malfoy 9",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Fleur Delacour  9",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Godric Gryffindor  10",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Phineas Nigellus Black 10",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Ludo Bagman  10",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Lavender Brown 10",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Viktor Krum 10",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Neville Longbottom 10",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Ernie Macmillan 10",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Theodore Nott 10",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Peter Pettigrew  10",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Reginald Cattermole 10",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Vincent Crabbe 10",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Rolanda Hooch  10",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Bathilda Bagshot  10",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Terry Boot 10",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Millicent Bulstrode 10",
+                    "color": "#acff60",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Sturgis Podmore  10",
+                    "color": "#acff60",
+                    "size": "1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Collaboration",
+            "color": "#83abfc",
+            "children": [
+              {
+                "name": "Medium",
+                "color": "#9bbcff",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Cornelius Fudge 6",
+                    "color": "#9bbcff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Cormac McLaggen 6",
+                    "color": "#9bbcff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Susan Bones  6",
+                    "color": "#9bbcff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Michael Corner 6",
+                    "color": "#9bbcff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Rubeus Hagrid  6",
+                    "color": "#9bbcff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Igor Karkaroff  6",
+                    "color": "#9bbcff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Minerva McGonagall 6",
+                    "color": "#9bbcff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Viktor Krum 6",
+                    "color": "#9bbcff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Antioch Peverell 6",
+                    "color": "#9bbcff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Amelia Bones  7",
+                    "color": "#9bbcff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Amos Diggory 7",
+                    "color": "#9bbcff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Poppy Pomfrey  7",
+                    "color": "#9bbcff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Amycus Carrow 7",
+                    "color": "#9bbcff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Reginald Cattermole 7",
+                    "color": "#9bbcff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Garrick Ollivander  7",
+                    "color": "#9bbcff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Bathilda Bagshot  7",
+                    "color": "#9bbcff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Millicent Bulstrode 7",
+                    "color": "#9bbcff",
+                    "size": "1"
+                  },
+                ]
+              },
+              {
+                "name": "High",
+                "color": "#6698ff",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Godric Gryffindor  8",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Phineas Nigellus Black 8",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Albus Dumbledore 8",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Gellert Grindelwald  8",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Ludo Bagman  8",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Remus Lupin 8",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Penelope Clearwater  8",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Silvanus Kettleburn  8",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Pansy Parkinson 8",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Harry Potter  8",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Hermione Granger 8",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Bellatrix Lestrange 8",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Irma Pince 8",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Cho Chang  9",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Lavender Brown 9",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Alecto Carrow 9",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Ernie Macmillan 9",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Vincent Crabbe 9",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Seamus Finnigan 9",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Filius Flitwick  9",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Fleur Delacour  9",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Charity Burbage 10",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Neville Longbottom 10",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Theodore Nott 10",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Peter Pettigrew  10",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Draco Malfoy 10",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Graham Montague 10",
+                    "color": "#6698ff",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Sturgis Podmore  10",
+                    "color": "#6698ff",
+                    "size": "1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Code repository",
+            "color": "#fffb9e",
+            "children": [
+              {
+                "name": "Medium",
+                "color": "#fffbaf",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Cornelius Fudge 5",
+                    "color": "#fffbaf",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Godric Gryffindor  5",
+                    "color": "#fffbaf",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Hannah Abbott  5",
+                    "color": "#fffbaf",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Susan Bones  5",
+                    "color": "#fffbaf",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Silvanus Kettleburn  5",
+                    "color": "#fffbaf",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Antioch Peverell 5",
+                    "color": "#fffbaf",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Bathilda Bagshot  5",
+                    "color": "#fffbaf",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Fleur Delacour  5",
+                    "color": "#fffbaf",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Phineas Nigellus Black 6",
+                    "color": "#fffbaf",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Albus Dumbledore 6",
+                    "color": "#fffbaf",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Charity Burbage 6",
+                    "color": "#fffbaf",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Michael Corner 6",
+                    "color": "#fffbaf",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Helga Hufflepuff 6",
+                    "color": "#fffbaf",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Igor Karkaroff  6",
+                    "color": "#fffbaf",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Remus Lupin 6",
+                    "color": "#fffbaf",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Marcus Flint 6",
+                    "color": "#fffbaf",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Ernie Macmillan 6",
+                    "color": "#fffbaf",
+                    "size": "1"
+                  },
+                ]
+              },
+              {
+                "name": "High",
+                "color": "#fff875",
+                "size": "0",
+                "children": [
+                  {
+                    "name": "Ludo Bagman  7",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Cuthbert Binns 7",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Alecto Carrow 7",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Amos Diggory 7",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Rubeus Hagrid  7",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Penelope Clearwater  7",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Viktor Krum 7",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Pansy Parkinson 7",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Harry Potter  7",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Peter Pettigrew  8",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Mary Cattermole  8",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Seamus Finnigan 8",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Bellatrix Lestrange 8",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Terry Boot 8",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Millicent Bulstrode 8",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Neville Longbottom 9",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Poppy Pomfrey  9",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Amycus Carrow 9",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Vincent Crabbe 9",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Rolanda Hooch  9",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Hermione Granger 9",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Graham Montague 9",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Colin Creevey 9",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Reginald Cattermole 10",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Draco Malfoy 10",
+                    "color": "#fff875",
+                    "size": "1"
+                  },
+                  {
+                    "name": "Sturgis Podmore  10",
+                    "color": "#fff875",
+                    "size": "1"
+                  }
+                ]
+              }
+            ]
+          },
+        ]
+      };
+
+
+    createData(json);
+
+    function createData(data) {
+
+      root = d3.hierarchy(data);
+      root.sum(d => d.size);
+
+      const slice = svg.selectAll('g.slice')
+        .data(partition(root).descendants());
+
+      slice.exit().remove();
+
+      const newSlice = slice.enter()
+        .append('g').attr('class', 'slice')
+        .on('click', d => {
+          d3.event.stopPropagation();
+          focusOn(d);
+        });
+
+      newSlice.append('title')
+        .text(d => d.data.name + '\n' + formatNumber(d.value));
+
+      newSlice.append('path')
+        .attr('class', 'main-arc')
+        .style('fill', d => d.data.color)
+        .attr('d', arc);
+
+      newSlice.append('path')
+        .attr('class', 'hidden-arc')
+        .attr('id', (_, i) => `hiddenArc${i}`)
+        .attr('d', middleArcLine);
+
+      const text = newSlice.append('text')
+        .attr('display', d => textFits(d) ? null : 'none');
+
+      text.append('textPath')
+        .attr('startOffset', '50%')
+        .attr('xlink:href', (_, i) => `#hiddenArc${i}`)
+        .text(d => d.data.name);
+    };
+
+    function focusOn(d = { x0: 0, x1: 1, y0: 0, y1: 1 }) {
+      // Reset to top-level if no data point specified
+
+      const transition = svg.transition()
+        .duration(750)
+        .tween('scale', () => {
+          const xd = d3.interpolate(x.domain(), [d.x0, d.x1]),
+            yd = d3.interpolate(y.domain(), [d.y0, 1]);
+          return t => { x.domain(xd(t)); y.domain(yd(t)); };
+        });
+
+      transition.selectAll('path.main-arc')
+        .attrTween('d', d => () => arc(d));
+
+      transition.selectAll('path.hidden-arc')
+        .attrTween('d', d => () => middleArcLine(d));
+
+      transition.selectAll('text')
+        .attrTween('display', d => () => textFits(d) ? null : 'none');
+
+      moveStackToFront(d);
+
+      //
+
+      function moveStackToFront(elD) {
+        svg.selectAll('.slice').filter(d => d === elD)
+          .each(function (d) {
+            this.parentNode.appendChild(this);
+            if (d.parent) { moveStackToFront(d.parent); }
+          })
+      }
+    }
+  </script>
